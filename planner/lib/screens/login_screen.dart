@@ -3,6 +3,7 @@ import '../theme/app_colors.dart';
 import '../data/repositories/usuario_repository.dart';
 import '../utils/password_helper.dart';
 import 'cadastro_screen.dart'; 
+import 'meta_screen.dart'; 
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -38,13 +39,17 @@ class _LoginScreenState extends State<LoginScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Bem-vindo, ${usuarioLogado.nome}!'),
-              backgroundColor: AppColors.medio,
+              backgroundColor: AppColors.escuro,
             ),
           );
-          
-          // Aqui no futuro você colocará o código para ir para a Tela de Metas
-          // Navigator.pushReplacement(...);
-          
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MetasScreen(usuarioId: usuarioLogado.id!), // Letra maiúscula aqui
+            ),
+          );
+                
         } else {
           // LOGIN FALHOU
           ScaffoldMessenger.of(context).showSnackBar(

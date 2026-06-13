@@ -44,7 +44,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Usuário cadastrado com sucesso! Faça seu login.'),
-            backgroundColor: AppColors.medio,
+            backgroundColor: AppColors.escuro,
           ),
         );
         _nomeController.clear();
