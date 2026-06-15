@@ -63,6 +63,7 @@ class DatabaseHelper {
         FrequenciaId INTEGER NOT NULL,
         Descricao TEXT NOT NULL,
         Dia_Especifico INTEGER,
+        Ativo INTEGER DEFAULT 1, 
         FOREIGN KEY (MetaId) REFERENCES Meta (Id) ON DELETE CASCADE,
         FOREIGN KEY (FrequenciaId) REFERENCES Frequencia (Id)
       )
