@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'screens/cadastro_screen.dart'; 
 import 'screens/login_screen.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() {
 
@@ -20,6 +21,16 @@ class MeuApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
       ),
+
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('pt', 'BR'), 
+      ],
+
       // Aqui dizemos qual é a tela inicial!
       home: const LoginScreen(),
     );
