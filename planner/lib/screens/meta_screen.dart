@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../data/repositories/meta_repository.dart';
 import 'login_screen.dart'; 
+import 'criar_meta_screen.dart'; 
+import 'ver_meta_screen.dart';
+import 'editar_meta_screen.dart';
 
 class MetasScreen extends StatefulWidget {
   final int usuarioId;
@@ -74,7 +77,48 @@ class _MetasScreenState extends State<MetasScreen> {
     }
   }
 
+  // modal de confirmação antes de deletar
   Future<void> _deletarMeta(int id) async {
+    // 1. Exibe o alerta e aguarda a resposta do usuário
+    bool confirmar = await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: AppColors.branco,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
+              SizedBox(width: 8),
+              Text('Excluir Meta', style: TextStyle(color: AppColors.escuro, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: const Text(
+            'Tem certeza que deseja excluir? Todo o histórico será perdido no processo.',
+            style: TextStyle(color: AppColors.escuro, fontSize: 16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false), // Retorna 'false' ao fechar
+              child: const Text('CANCELAR', style: TextStyle(color: AppColors.escuro, fontWeight: FontWeight.bold)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              onPressed: () => Navigator.of(context).pop(true), // Retorna 'true' ao confirmar
+              child: const Text('EXCLUIR', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
+    ) ?? false; // Se o usuário clicar fora do modal para fechar, assume como 'false'
+
+    // 2. Se o usuário cancelou, não faz nada
+    if (!confirmar) return;
+
+    // 3. Se confirmou, executa a exclusão no banco de dados
     await _metaRepository.deletar(id);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -226,7 +270,12 @@ class _MetasScreenState extends State<MetasScreen> {
 
             ElevatedButton.icon(
               onPressed: () {
-                // Futuro Navigator para CriarMetaScreen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CriarMetaScreen(usuarioId: widget.usuarioId),
+                  ),
+                ).then((_) => _carregarMetas()); // Também recarrega caso crie uma nova e volte
               },
               icon: const Icon(Icons.add, color: AppColors.branco),
               label: const Text(
@@ -288,12 +337,26 @@ class _MetasScreenState extends State<MetasScreen> {
                                             IconButton(
                                               icon: const Icon(Icons.visibility, color: Colors.blue),
                                               tooltip: 'Ver',
-                                              onPressed: () {},
+                                              onPressed: () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) => VerMetaScreen(meta: meta),
+                                                  ),
+                                                ).then((_) => _carregarMetas()); // Recarrega a lista ao voltar
+                                              },
                                             ),
                                             IconButton(
                                               icon: const Icon(Icons.edit, color: Colors.orange),
-                                              tooltip: 'Atualizar',
-                                              onPressed: () {},
+                                              tooltip: 'Editar',
+                                              onPressed: () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) => EditarMetaScreen(meta: meta),
+                                                  ),
+                                                ).then((_) => _carregarMetas()); // Recarrega a lista se houver edição
+                                              },
                                             ),
                                             IconButton(
                                               icon: const Icon(Icons.delete, color: Colors.red),
