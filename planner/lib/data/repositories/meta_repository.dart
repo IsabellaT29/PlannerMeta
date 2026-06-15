@@ -16,12 +16,29 @@ class MetaRepository {
     );
   }
 
+  // INSERIR NOVA META
+  Future<int> inserir(Meta meta) async {
+    final db = await _dbHelper.database;
+    return await db.insert('Meta', meta.toMap());
+  }
+
   // DELETAR META
   Future<int> deletar(int id) async {
     final db = await _dbHelper.database;
     
     return await db.delete(
       'Meta',
+      where: 'Id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  // ATUALIZAR META
+  Future<int> atualizar(int id, String descricao, String prazo) async {
+    final db = await _dbHelper.database;
+    return await db.update(
+      'Meta',
+      {'Descricao': descricao, 'Prazo': prazo},
       where: 'Id = ?',
       whereArgs: [id],
     );

@@ -4,12 +4,15 @@ class Micrometa {
   final int frequenciaId;
   final String descricao;
   final int? diaEspecifico; 
+  final int ativo; 
+
   Micrometa({
     this.id,
     required this.metaId,
     required this.frequenciaId,
     required this.descricao,
     this.diaEspecifico,
+    this.ativo = 1, 
   });
 
   factory Micrometa.fromMap(Map<String, dynamic> map) {
@@ -19,6 +22,7 @@ class Micrometa {
       frequenciaId: map['FrequenciaId'] as int,
       descricao: map['Descricao'] as String,
       diaEspecifico: map['Dia_Especifico'] as int?,
+      ativo: map['Ativo'] as int? ?? 1,
     );
   }
 
@@ -29,6 +33,7 @@ class Micrometa {
       'FrequenciaId': frequenciaId,
       'Descricao': descricao,
       'Dia_Especifico': diaEspecifico, 
+      'Ativo': ativo,
     };
   }
 }
