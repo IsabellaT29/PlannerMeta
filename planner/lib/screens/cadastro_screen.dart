@@ -25,6 +25,19 @@ class _CadastroScreenState extends State<CadastroScreen> {
     // Verifica se todos os campos passaram na validação
     if (_formKey.currentState!.validate()) {
       
+      final usuarioRepo = UsuarioRepository();
+      // -- validação email --
+        bool jaCadastrado = await usuarioRepo.emailExiste(_emailController.text);
+        if (jaCadastrado) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Este e-mail já está em uso!'), backgroundColor: Colors.red),
+            );
+          }
+          return; // Interrompe a execução
+        }
+
+
       // 1. Criptografa a senha digitada
       String senhaCriptografada = PasswordHelper.criptografar(_senhaController.text);
 
@@ -35,8 +48,6 @@ class _CadastroScreenState extends State<CadastroScreen> {
         senha: senhaCriptografada,
       );
 
-      // 3. Salva no banco de dados SQLite
-      final usuarioRepo = UsuarioRepository();
       await usuarioRepo.inserir(novoUsuario);
 
       // 4. Mostra um aviso de sucesso e limpa o formulário
