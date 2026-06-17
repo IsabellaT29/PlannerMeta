@@ -160,6 +160,7 @@ class _EditarMetaScreenState extends State<EditarMetaScreen> {
         Navigator.pop(context, true);
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro: $e')));
     }
   }
@@ -237,9 +238,9 @@ class _EditarMetaScreenState extends State<EditarMetaScreen> {
                             value: grupo.frequenciaId,
                             decoration: _construirDecoracao('Frequência'),
                             items: const [
-                              DropdownMenuItem(value: 1, child: Text('Diária')),
-                              DropdownMenuItem(value: 2, child: Text('Semanal')),
-                              DropdownMenuItem(value: 3, child: Text('Mensal')),
+                              DropdownMenuItem<int>(value: 1, child: Text('Diária')),
+                              DropdownMenuItem<int>(value: 2, child: Text('Semanal')),
+                              DropdownMenuItem<int>(value: 3, child: Text('Mensal')),
                             ],
                             onChanged: (val) {
                               setState(() {
@@ -289,9 +290,9 @@ class _EditarMetaScreenState extends State<EditarMetaScreen> {
                             value: nova.frequenciaId,
                             decoration: _construirDecoracao('Frequência'),
                             items: const [
-                              DropdownMenuItem(value: 1, child: Text('Diária')),
-                              DropdownMenuItem(value: 2, child: Text('Semanal')),
-                              DropdownMenuItem(value: 3, child: Text('Mensal')),
+                              DropdownMenuItem<int>(value: 1, child: Text('Diária')),
+                              DropdownMenuItem<int>(value: 2, child: Text('Semanal')),
+                              DropdownMenuItem<int>(value: 3, child: Text('Mensal')),
                             ],
                             onChanged: (val) => setState(() { nova.frequenciaId = val!; nova.diasSemana.clear(); nova.diasMes.clear(); }),
                           ),

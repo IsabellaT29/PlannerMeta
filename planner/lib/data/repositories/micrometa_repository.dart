@@ -21,6 +21,12 @@ class MicrometaRepository {
     return await db.query('Micrometas', where: 'MetaId = ? AND Ativo = 1', whereArgs: [metaId]);
   }
 
+// Busca APENAS ATIVAS de todas as metas para a tela de Rotina Diária (Home)
+Future<List<Map<String, dynamic>>> buscarTodasAtivasGerais() async {
+  final db = await _dbHelper.database;
+  return await db.query('Micrometas', where: 'Ativo = 1');
+}
+
   Future<int> atualizarCompleto(int id, String descricao, int frequenciaId, int? diaEspecifico) async {
     final db = await _dbHelper.database;
     return await db.update(

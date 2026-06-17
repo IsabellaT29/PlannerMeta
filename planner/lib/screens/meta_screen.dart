@@ -175,7 +175,7 @@ class _MetasScreenState extends State<MetasScreen> {
             // Link Home
             TextButton(
               onPressed: () {
-                // Ação para navegar para a Home
+                Navigator.pop(context);
               },
               child: const Text(
                 'Home',
@@ -319,7 +319,7 @@ class _MetasScreenState extends State<MetasScreen> {
                             scrollDirection: Axis.horizontal,
                             child: SingleChildScrollView(
                               child: DataTable(
-                                headingRowColor: WidgetStateProperty.all(AppColors.medio.withOpacity(0.3)),
+                                headingRowColor: WidgetStateProperty.all(AppColors.medio.withValues(alpha:0.3)),
                                 columns: const [
                                   DataColumn(label: Text('Descrição', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.escuro))),
                                   DataColumn(label: Text('Prazo', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.escuro))),
