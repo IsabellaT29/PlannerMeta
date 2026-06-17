@@ -31,6 +31,33 @@ class UsuarioRepository {
     return null; 
   }
 
+  // Verificar se o e-mail já existe
+  Future<bool> emailExiste(String email) async {
+    final db = await _dbHelper.database;
+    final result = await db.query(
+      'Usuario',
+      where: 'Email = ?',
+      whereArgs: [email],
+    );
+    return result.isNotEmpty;
+  }
+
+  // BUSCAR NOME POR ID
+  Future<String> buscarNomePorId(int id) async {
+    final db = await _dbHelper.database;
+    final result = await db.query(
+      'Usuario',
+      columns: ['Nome'],
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+
+    if (result.isNotEmpty) {
+      return result.first['Nome'] as String;
+    }
+    return 'Usuário';
+  }
+
 
 
 

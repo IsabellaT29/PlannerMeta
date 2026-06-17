@@ -3,10 +3,13 @@ import 'package:flutter/foundation.dart';
 import '../theme/app_colors.dart';
 import '../data/repositories/micrometa_repository.dart';
 import '../data/repositories/historico_repository.dart';
+import '../data/repositories/usuario_repository.dart'; 
 import 'meta_screen.dart';
+import 'login_screen.dart'; 
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final int usuarioId; 
+  const HomeScreen({super.key, required this.usuarioId}); 
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -15,28 +18,41 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final MicrometaRepository _micrometaRepo = MicrometaRepository();
   final HistoricoRepository _historicoRepo = HistoricoRepository();
+  final UsuarioRepository _usuarioRepo = UsuarioRepository(); // Adicionado
 
   List<Map<String, dynamic>> _rotinaDiariaAgrupada = [];
   Map<int, bool> _cumpridasHoje = {};
   bool _isLoading = true;
+  String _nomeUsuario = "Carregando..."; // Adicionado
 
   @override
   void initState() {
     super.initState();
-    _carregarRotinaDiaria();
+    _inicializarDados(); // Unificado
+  }
+
+  Future<void> _inicializarDados() async {
+    setState(() => _isLoading = true);
+    // Busca o nome do usuário usando o ID recebido
+    final nome = await _usuarioRepo.buscarNomePorId(widget.usuarioId);
+    setState(() => _nomeUsuario = nome);
+    await _carregarRotinaDiaria();
+  }
+
+  Future<void> _efetuarLogout() async {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+      (route) => false,
+    );
   }
 
   Future<void> _carregarRotinaDiaria() async {
     if (!mounted) return;
-    setState(() {
-      _isLoading = true;
-    });
-
+    
     try {
-      // 1. Busca todos os registros brutos do SQLite
       final rotinasBrutas = await _micrometaRepo.buscarTodasAtivasGerais(); 
       
-      // 2. Mapas auxiliares para estruturar e agrupar com segurança sem estourar tipo nulo
       Map<int, Map<String, dynamic>> agrupado = {};
       Map<int, bool> cumpridas = {};
 
@@ -46,29 +62,24 @@ class _HomeScreenState extends State<HomeScreen> {
         int frequenciaId = mm['FrequenciaId'];
         int? diaEspecifico = mm['Dia_Especifico'];
         
-        // Verifica o estado de cumprimento de hoje
         bool jaCumpriuHoje = await _historicoRepo.verificouHoje(id);
         cumpridas[id] = jaCumpriuHoje;
 
-        // Se a meta ainda não está mapeada, inicializa ela definindo explicitamente 'DiasAtivos' como uma lista real
         if (!agrupado.containsKey(metaId)) {
           agrupado[metaId] = {
             'Id': id,
             'MetaId': metaId,
             'Descricao': mm['Descricao'],
             'FrequenciaId': frequenciaId,
-            'DiasAtivos': <int>[], // Lista instanciada com tipo estrito para evitar o erro de Null
+            'DiasAtivos': <int>[], 
           };
         }
 
         List<int> diasAtivosDaMeta = agrupado[metaId]!['DiasAtivos'] as List<int>;
 
-        // Alimenta a lista de dias com base na regra de frequência
         if (frequenciaId == 1) {
-          // Diária: Ativa de Domingo (0) a Sábado (6)
           agrupado[metaId]!['DiasAtivos'] = [0, 1, 2, 3, 4, 5, 6];
         } else if (frequenciaId == 2 && diaEspecifico != null) {
-          // Semanal: Adiciona o dia específico se ele não estiver na lista
           if (!diasAtivosDaMeta.contains(diaEspecifico)) {
             diasAtivosDaMeta.add(diaEspecifico);
           }
@@ -121,21 +132,16 @@ class _HomeScreenState extends State<HomeScreen> {
     bool feitaHoje = _cumpridasHoje[id] ?? false;
     List<int> diasAtivos = mm['DiasAtivos'] as List<int>;
     
-    // Converte o weekday do Dart (1:Seg..7:Dom) para o padrão do seu seletor (0:Dom..1:Seg..6:Sáb)
     int hojeNoPadraoSeletor = DateTime.now().weekday == 7 ? 0 : DateTime.now().weekday;
     
-    // Permite marcar se for diária (1) ou se o dia atual está contido na lista de agendamentos estruturada
     bool diaCorreto = mm['FrequenciaId'] == 1 || diasAtivos.contains(hojeNoPadraoSeletor);
 
-    // Lista de exibição começando por Domingo para sincronizar visualmente
     final List<String> diasDaSemanaHome = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Responsividade: Se a largura da tela for menor que 620px, adapta para o Mobile
         bool isMobile = constraints.maxWidth < 620;
 
-        // Componente das bolinhas isolado com Wrap para evitar estouro de layout
         Widget listaBolinhas = Wrap(
           spacing: 6,
           runSpacing: 6,
@@ -202,7 +208,6 @@ class _HomeScreenState extends State<HomeScreen> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Checkbox principal
                   InkWell(
                     onTap: diaCorreto 
                         ? () => _toggleCumprimento(id) 
@@ -227,7 +232,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(width: 16),
 
-                  // Descrição da Meta protegida por Expanded para não esmagar no celular
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -253,7 +257,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
 
-                  // Se for tela larga (Desktop/Web), exibe na direita
                   if (!isMobile) ...[
                     const SizedBox(width: 16),
                     listaBolinhas,
@@ -261,11 +264,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
               
-              // Se for tela fina (Mobile), joga as bolinhas para baixo elegantemente
               if (isMobile) ...[
                 const SizedBox(height: 16),
                 Padding(
-                  padding: const EdgeInsets.only(left: 42), // Alinha perfeitamente com o início do texto
+                  padding: const EdgeInsets.only(left: 42),
                   child: listaBolinhas,
                 ),
               ],
@@ -281,7 +283,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: AppColors.claro,
       appBar: AppBar(
-        automaticallyImplyLeading: false, 
+        automaticallyImplyLeading: false,
         backgroundColor: AppColors.medio,
         iconTheme: const IconThemeData(color: AppColors.escuro),
         title: Row(
@@ -293,10 +295,10 @@ class _HomeScreenState extends State<HomeScreen> {
               child: const Text(
                 'Home',
                 style: TextStyle(
-                  color: AppColors.escuro, 
-                  fontSize: 16, 
+                  color: AppColors.escuro,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  decoration: TextDecoration.underline, 
+                  decoration: TextDecoration.underline,
                 ),
               ),
             ),
@@ -306,21 +308,74 @@ class _HomeScreenState extends State<HomeScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const MetasScreen(usuarioId: 1), 
+                    builder: (context) => MetasScreen(usuarioId: widget.usuarioId),
                   ),
-                ).then((_) => _carregarRotinaDiaria()); // Atualiza ao voltar da tela de Metas
+                ).then((_) => _carregarRotinaDiaria());
               },
               child: const Text(
                 'Metas',
                 style: TextStyle(
-                  color: AppColors.escuro, 
-                  fontSize: 16, 
+                  color: AppColors.escuro,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
           ],
         ),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'logout') {
+                _efetuarLogout();
+              }
+            },
+            offset: const Offset(0, 50),
+            child: Padding(
+              padding: const EdgeInsets.only(left: 8.0, right: 16.0),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      _nomeUsuario,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      style: const TextStyle(
+                        color: AppColors.escuro,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Icon(Icons.account_circle, size: 28, color: AppColors.escuro),
+                ],
+              ),
+            ),
+            itemBuilder: (BuildContext context) => [
+              PopupMenuItem<String>(
+                value: 'profile_info',
+                enabled: false,
+                child: Text(
+                  'Logado como:\n$_nomeUsuario',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ),
+              const PopupMenuDivider(),
+              PopupMenuItem<String>(
+                value: 'logout',
+                child: Row(
+                  children: const [
+                    Icon(Icons.exit_to_app, color: Colors.red, size: 20),
+                    SizedBox(width: 8),
+                    Text('Deslogar', style: TextStyle(color: Colors.red)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: Color(0xFFB07A8A)))
