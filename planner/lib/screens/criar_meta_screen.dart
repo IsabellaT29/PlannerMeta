@@ -253,9 +253,9 @@ class _CriarMetaScreenState extends State<CriarMetaScreen> {
                       dropdownColor: AppColors.branco,
                       value: micrometa.frequenciaId,
                       items: const [
-                        DropdownMenuItem(value: 1, child: Text('Diária')),
-                        DropdownMenuItem(value: 2, child: Text('Semanal')),
-                        DropdownMenuItem(value: 3, child: Text('Mensal')),
+                        DropdownMenuItem<int>(value: 1, child: Text('Diária')),
+                        DropdownMenuItem<int>(value: 2, child: Text('Semanal')),
+                        DropdownMenuItem<int>(value: 3, child: Text('Mensal')),
                       ],
                       onChanged: (val) {
                         setState(() {
