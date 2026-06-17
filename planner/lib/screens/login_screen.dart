@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../data/repositories/usuario_repository.dart';
 import '../utils/password_helper.dart';
-import 'cadastro_screen.dart'; 
-import 'meta_screen.dart'; 
+import 'cadastro_screen.dart';
+import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -46,7 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => MetasScreen(usuarioId: usuarioLogado.id!), // Letra maiúscula aqui
+              builder: (context) => const HomeScreen(), 
             ),
           );
                 

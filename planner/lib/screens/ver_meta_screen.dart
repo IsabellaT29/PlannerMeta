@@ -83,11 +83,13 @@ class _VerMetaScreenState extends State<VerMetaScreen> {
 
     if (jaCumpriuHoje) {
       await _historicoRepo.removerCumprimentoHoje(micrometaId);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Marcação de hoje removida.'), backgroundColor: AppColors.escuro),
       );
     } else {
       await _historicoRepo.registrarCumprimento(micrometaId);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Uhuul! Progresso registrado!'), backgroundColor: Colors.green),
       );
@@ -173,7 +175,7 @@ class _VerMetaScreenState extends State<VerMetaScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: vezesCumprida > 0 ? Colors.green.withOpacity(0.2) : AppColors.medio.withOpacity(0.3),
+                                color: vezesCumprida > 0 ? Colors.green.withValues(alpha:0.2) : AppColors.medio.withValues(alpha:0.3),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
@@ -235,7 +237,7 @@ class _VerMetaScreenState extends State<VerMetaScreen> {
                               const SizedBox(height: 8),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(color: Colors.grey.withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
+                                decoration: BoxDecoration(color: Colors.grey.withValues(alpha:0.2), borderRadius: BorderRadius.circular(8)),
                                 child: Text('🔒 Cumprida $vezesCumprida vezes no passado', style: TextStyle(color: Colors.grey[700], fontWeight: FontWeight.bold)),
                               ),
                             ],

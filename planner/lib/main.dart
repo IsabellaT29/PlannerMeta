@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
-import 'screens/cadastro_screen.dart'; 
 import 'screens/login_screen.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'package:flutter/foundation.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
+import 'package:sqflite/sqflite.dart';
+
 void main() {
-
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MeuApp());
 
+  // Ativa o banco de dados na memória do navegador se estiver a rodar no Chrome
+  if (kIsWeb) {
+    databaseFactory = databaseFactoryFfiWeb;
+  }
+
+  runApp(const MeuApp());
 }
 
 class MeuApp extends StatelessWidget {
