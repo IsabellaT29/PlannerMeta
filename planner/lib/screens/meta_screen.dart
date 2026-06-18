@@ -22,7 +22,7 @@ class _MetasScreenState extends State<MetasScreen> {
   List<Map<String, dynamic>> _metas = [];
   List<Map<String, dynamic>> _metasFiltradas = [];
   bool _isLoading = true;
-  String _nomeUsuario = "Carregando..."; // Guardará o nome do usuário logado
+  String _nomeUsuario = "Carregando..."; 
 
   @override
   void initState() {
@@ -36,7 +36,6 @@ class _MetasScreenState extends State<MetasScreen> {
     super.dispose();
   }
 
-  // Carrega o nome do usuário e as metas em paralelo
   Future<void> _carregarDadosIniciais() async {
     setState(() => _isLoading = true);
     try {
@@ -77,9 +76,7 @@ class _MetasScreenState extends State<MetasScreen> {
     }
   }
 
-  // modal de confirmação antes de deletar
   Future<void> _deletarMeta(int id) async {
-    // 1. Exibe o alerta e aguarda a resposta do usuário
     bool confirmar = await showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -99,7 +96,7 @@ class _MetasScreenState extends State<MetasScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(false), // Retorna 'false' ao fechar
+              onPressed: () => Navigator.of(context).pop(false),
               child: const Text('CANCELAR', style: TextStyle(color: AppColors.escuro, fontWeight: FontWeight.bold)),
             ),
             ElevatedButton(
@@ -107,18 +104,16 @@ class _MetasScreenState extends State<MetasScreen> {
                 backgroundColor: Colors.red,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              onPressed: () => Navigator.of(context).pop(true), // Retorna 'true' ao confirmar
+              onPressed: () => Navigator.of(context).pop(true),
               child: const Text('EXCLUIR', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             ),
           ],
         );
       },
-    ) ?? false; // Se o usuário clicar fora do modal para fechar, assume como 'false'
+    ) ?? false;
 
-    // 2. Se o usuário cancelou, não faz nada
     if (!confirmar) return;
 
-    // 3. Se confirmou, executa a exclusão no banco de dados
     await _metaRepository.deletar(id);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -131,7 +126,6 @@ class _MetasScreenState extends State<MetasScreen> {
     _carregarMetas();
   }
 
-  // Função para executar a ação de logout
   void _efetuarLogout() {
     Navigator.pushReplacement(
       context,
@@ -165,66 +159,36 @@ class _MetasScreenState extends State<MetasScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.claro,
-      // Customização da AppBar para agir como uma Nav Bar completa
       appBar: AppBar(
-        automaticallyImplyLeading: false, // Remove botão de voltar automático
+        automaticallyImplyLeading: false,
         backgroundColor: AppColors.medio,
         iconTheme: const IconThemeData(color: AppColors.escuro),
         title: Row(
           children: [
-            // Link Home
             TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text(
-                'Home',
-                style: TextStyle(color: AppColors.escuro, fontSize: 16, fontWeight: FontWeight.bold),
-              ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Home', style: TextStyle(color: AppColors.escuro, fontSize: 16, fontWeight: FontWeight.bold)),
             ),
             const SizedBox(width: 5),
-            // Link Metas
             TextButton(
               onPressed: _carregarMetas,
-              child: const Text(
-                'Metas',
-                style: TextStyle(
-                  color: AppColors.escuro, 
-                  fontSize: 16, 
-                  fontWeight: FontWeight.bold,
-                  decoration: TextDecoration.underline
-                ),
-              ),
+              child: const Text('Metas', style: TextStyle(color: AppColors.escuro, fontSize: 16, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
             ),
           ],
         ),
         actions: [
-                    
-          // Menu Dropdown do Perfil do Usuário envolto em Flexible para evitar quebra por nomes longos
           PopupMenuButton<String>(
             onSelected: (value) {
-              if (value == 'logout') {
-                _efetuarLogout();
-              }
+              if (value == 'logout') _efetuarLogout();
             },
             offset: const Offset(0, 50),
             child: Padding(
               padding: const EdgeInsets.only(left: 8.0, right: 16.0),
               child: Row(
-                mainAxisSize: MainAxisSize.min, // Garante que a linha ocupe apenas o espaço necessário
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Flexible impede que o nome do usuário "empurre" a tela para fora se for muito comprido
                   Flexible(
-                    child: Text(
-                      _nomeUsuario,
-                      overflow: TextOverflow.ellipsis, // Se o nome for gigante, ele coloca "..." no final ao invés de quebrar a tela
-                      maxLines: 1,
-                      style: const TextStyle(
-                        color: AppColors.escuro, 
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14
-                      ),
-                    ),
+                    child: Text(_nomeUsuario, overflow: TextOverflow.ellipsis, maxLines: 1, style: const TextStyle(color: AppColors.escuro, fontWeight: FontWeight.w600, fontSize: 14)),
                   ),
                   const SizedBox(width: 6),
                   const Icon(Icons.account_circle, size: 28, color: AppColors.escuro),
@@ -235,10 +199,7 @@ class _MetasScreenState extends State<MetasScreen> {
               PopupMenuItem<String>(
                 value: 'profile_info',
                 enabled: false,
-                child: Text(
-                  'Logado como:\n$_nomeUsuario',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
+                child: Text('Logado como:\n$_nomeUsuario', style: const TextStyle(fontSize: 12, color: Colors.grey)),
               ),
               const PopupMenuDivider(),
               const PopupMenuItem<String>(
@@ -254,7 +215,7 @@ class _MetasScreenState extends State<MetasScreen> {
             ],
           ),
         ],
-      ),      
+      ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -267,102 +228,50 @@ class _MetasScreenState extends State<MetasScreen> {
               decoration: _construirDecoracao('Pesquisar metas...', Icons.search),
             ),
             const SizedBox(height: 16),
-
             ElevatedButton.icon(
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => CriarMetaScreen(usuarioId: widget.usuarioId),
-                  ),
-                ).then((_) => _carregarMetas()); // Também recarrega caso crie uma nova e volte
+                  MaterialPageRoute(builder: (context) => CriarMetaScreen(usuarioId: widget.usuarioId)),
+                ).then((_) => _carregarMetas());
               },
               icon: const Icon(Icons.add, color: AppColors.branco),
-              label: const Text(
-                'CRIAR NOVA META',
-                style: TextStyle(fontSize: 16, color: AppColors.branco, fontWeight: FontWeight.bold),
-              ),
+              label: const Text('CRIAR NOVA META', style: TextStyle(fontSize: 16, color: AppColors.branco, fontWeight: FontWeight.bold)),
               style: ButtonStyle(
-                backgroundColor: WidgetStateProperty.resolveWith<Color>(
-                  (Set<WidgetState> states) {
-                    if (states.contains(WidgetState.hovered)) {
-                      return const Color(0xFF6B2036);
-                    }
-                    return AppColors.escuro;
-                  },
-                ),
+                backgroundColor: WidgetStateProperty.all(AppColors.escuro),
                 padding: WidgetStateProperty.all(const EdgeInsets.symmetric(vertical: 16)),
-                shape: WidgetStateProperty.all(
-                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
+                shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
               ),
             ),
             const SizedBox(height: 24),
-
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator(color: AppColors.escuro))
                   : _metasFiltradas.isEmpty
-                      ? const Center(
-                          child: Text(
-                            'Nenhuma meta encontrada.',
-                            style: TextStyle(color: AppColors.escuro, fontSize: 16),
-                          ),
-                        )
+                      ? const Center(child: Text('Nenhuma meta encontrada.', style: TextStyle(color: AppColors.escuro, fontSize: 16)))
                       : Container(
-                          decoration: BoxDecoration(
-                            color: AppColors.branco,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColors.medio),
-                          ),
+                          decoration: BoxDecoration(color: AppColors.branco, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppColors.medio)),
                           child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
+                            scrollDirection: Axis.vertical,
                             child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
                               child: DataTable(
-                                headingRowColor: WidgetStateProperty.all(AppColors.medio.withValues(alpha:0.3)),
+                                headingRowColor: WidgetStateProperty.all(AppColors.medio.withValues(alpha: 0.3)),
                                 columns: const [
                                   DataColumn(label: Text('Descrição', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.escuro))),
-                                  DataColumn(label: Text('Prazo', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.escuro))),
                                   DataColumn(label: Text('Ações', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.escuro))),
                                 ],
                                 rows: _metasFiltradas.map((meta) {
                                   return DataRow(
                                     cells: [
                                       DataCell(Text(meta['Descricao'], style: const TextStyle(color: AppColors.escuro))),
-                                      DataCell(Text(meta['Prazo'], style: const TextStyle(color: AppColors.escuro))),
                                       DataCell(
                                         Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            IconButton(
-                                              icon: const Icon(Icons.visibility, color: Colors.blue),
-                                              tooltip: 'Ver',
-                                              onPressed: () {
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (context) => VerMetaScreen(meta: meta),
-                                                  ),
-                                                ).then((_) => _carregarMetas()); // Recarrega a lista ao voltar
-                                              },
-                                            ),
-                                            IconButton(
-                                              icon: const Icon(Icons.edit, color: Colors.orange),
-                                              tooltip: 'Editar',
-                                              onPressed: () {
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (context) => EditarMetaScreen(meta: meta),
-                                                  ),
-                                                ).then((_) => _carregarMetas()); // Recarrega a lista se houver edição
-                                              },
-                                            ),
-                                            IconButton(
-                                              icon: const Icon(Icons.delete, color: Colors.red),
-                                              tooltip: 'Deletar',
-                                              onPressed: () => _deletarMeta(meta['Id']),
-                                            ),
+                                            IconButton(icon: const Icon(Icons.visibility, color: Colors.blue), tooltip: 'Ver', onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => VerMetaScreen(meta: meta))).then((_) => _carregarMetas())),
+                                            IconButton(icon: const Icon(Icons.edit, color: Colors.orange), tooltip: 'Editar', onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => EditarMetaScreen(meta: meta))).then((_) => _carregarMetas())),
+                                            IconButton(icon: const Icon(Icons.delete, color: Colors.red), tooltip: 'Deletar', onPressed: () => _deletarMeta(meta['Id'])),
                                           ],
                                         ),
                                       ),
