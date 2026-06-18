@@ -18,7 +18,9 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final MicrometaRepository _micrometaRepo = MicrometaRepository();
   final HistoricoRepository _historicoRepo = HistoricoRepository();
-  final UsuarioRepository _usuarioRepo = UsuarioRepository(); // Adicionado
+  final UsuarioRepository _usuarioRepo = UsuarioRepository();
+  
+  Map<int, List<int>> _diasCumpridosSemana = {}; 
 
   List<Map<String, dynamic>> _rotinaDiariaAgrupada = [];
   Map<int, bool> _cumpridasHoje = {};
@@ -47,53 +49,82 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  bool _podeMarcarHoje(int frequenciaId, int? diaEspecifico) {
+    if (frequenciaId == 1) return true;
+
+    DateTime hoje = DateTime.now();
+
+    // Semanal
+    if (frequenciaId == 2) {
+      int diaSemanaAtual =
+          hoje.weekday == 7 ? 0 : hoje.weekday;
+
+      return diaSemanaAtual == diaEspecifico;
+    }
+
+    // Mensal
+    if (frequenciaId == 3) {
+      return hoje.day == diaEspecifico;
+    }
+
+    return false;
+  }
+
   Future<void> _carregarRotinaDiaria() async {
     if (!mounted) return;
-    
+
     try {
-      final rotinasBrutas = await _micrometaRepo.buscarTodasAtivasGerais(); 
-      
-      Map<int, Map<String, dynamic>> agrupado = {};
+      final rotinasBrutas =
+          await _micrometaRepo.buscarTodasAtivasComNomeMeta();
+
+      List<Map<String, dynamic>> rotina = [];
       Map<int, bool> cumpridas = {};
 
       for (var mm in rotinasBrutas) {
+        if (!_podeMarcarHoje(
+          mm['FrequenciaId'],
+          mm['Dia_Especifico'],
+        )) {
+          continue;
+        }
+
         int id = mm['Id'];
-        int metaId = mm['MetaId'];
-        int frequenciaId = mm['FrequenciaId'];
-        int? diaEspecifico = mm['Dia_Especifico'];
-        
-        bool jaCumpriuHoje = await _historicoRepo.verificouHoje(id);
+
+        bool jaCumpriuHoje =
+            await _historicoRepo.verificouHoje(id);
+
         cumpridas[id] = jaCumpriuHoje;
 
-        if (!agrupado.containsKey(metaId)) {
-          agrupado[metaId] = {
-            'Id': id,
-            'MetaId': metaId,
-            'Descricao': mm['Descricao'],
-            'FrequenciaId': frequenciaId,
-            'DiasAtivos': <int>[], 
-          };
-        }
+        rotina.add({
+          ...mm,
+          'DiasAtivos': mm['FrequenciaId'] == 1
+              ? <int>[0, 1, 2, 3, 4, 5, 6]
+              : <int>[],
+        });
 
-        List<int> diasAtivosDaMeta = agrupado[metaId]!['DiasAtivos'] as List<int>;
+        final datas =
+          await _historicoRepo.buscarCumprimentosDaSemana(id);
 
-        if (frequenciaId == 1) {
-          agrupado[metaId]!['DiasAtivos'] = [0, 1, 2, 3, 4, 5, 6];
-        } else if (frequenciaId == 2 && diaEspecifico != null) {
-          if (!diasAtivosDaMeta.contains(diaEspecifico)) {
-            diasAtivosDaMeta.add(diaEspecifico);
-          }
-        }
+        _diasCumpridosSemana[id] =
+            datas.map((d) {
+              return d.weekday == 7 ? 0 : d.weekday;
+            }).toList();
       }
 
       if (!mounted) return;
+
       setState(() {
-        _rotinaDiariaAgrupada = agrupado.values.toList();
+        _rotinaDiariaAgrupada = rotina;
         _cumpridasHoje = cumpridas;
         _isLoading = false;
       });
+
+      
     } catch (e) {
+      debugPrint(e.toString());
+
       if (!mounted) return;
+
       setState(() {
         _isLoading = false;
       });
@@ -130,11 +161,19 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildRotinaCard(Map<String, dynamic> mm) {
     int id = mm['Id'];
     bool feitaHoje = _cumpridasHoje[id] ?? false;
-    List<int> diasAtivos = mm['DiasAtivos'] as List<int>;
+
+    List<int> diasAtivos =
+    (mm['DiasAtivos'] as List?)
+        ?.map((e) => e as int)
+        .toList() ??
+    [];
     
     int hojeNoPadraoSeletor = DateTime.now().weekday == 7 ? 0 : DateTime.now().weekday;
     
-    bool diaCorreto = mm['FrequenciaId'] == 1 || diasAtivos.contains(hojeNoPadraoSeletor);
+    bool diaCorreto = _podeMarcarHoje(
+      mm['FrequenciaId'],
+      mm['Dia_Especifico'],
+    );
 
     final List<String> diasDaSemanaHome = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
@@ -142,52 +181,86 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, constraints) {
         bool isMobile = constraints.maxWidth < 620;
 
-        Widget listaBolinhas = Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: List.generate(7, (i) {
-            bool pertenceAoAgendamento = mm['FrequenciaId'] == 1 || diasAtivos.contains(i);
-            bool diaFoiCumprido = (i == hojeNoPadraoSeletor) && feitaHoje;
+        Widget listaBolinhas;
 
-            Color corFundo;
-            Color corTexto;
+if (mm['FrequenciaId'] == 3) {
+  // Mensal
+  listaBolinhas = Container(
+    padding: const EdgeInsets.symmetric(
+      horizontal: 12,
+      vertical: 6,
+    ),
+    decoration: BoxDecoration(
+      color: const Color(0xFFF3EAE9),
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(
+        color: const Color(0xFFB07A8A).withAlpha(100),
+      ),
+    ),
+    child: Text(
+      'Dia ${mm['Dia_Especifico']}',
+      style: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.bold,
+        color: AppColors.escuro,
+      ),
+    ),
+  );
+  } else {
+    listaBolinhas = Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: List.generate(7, (i) {
+        bool pertenceAoAgendamento =
+            mm['FrequenciaId'] == 1 ||
+            diasAtivos.contains(i);
 
-            if (pertenceAoAgendamento) {
-              if (diaFoiCumprido) {
-                corFundo = const Color(0xFFB07A8A); 
-                corTexto = Colors.white;
-              } else {
-                corFundo = const Color(0xFFF3EAE9);
-                corTexto = AppColors.escuro.withAlpha(180);
-              }
-            } else {
-              corFundo = Colors.transparent;
-              corTexto = AppColors.escuro.withAlpha(50);
-            }
-            
-            return Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: corFundo,
-                border: pertenceAoAgendamento && !diaFoiCumprido
-                    ? Border.all(color: const Color(0xFFB07A8A).withAlpha(100), width: 1)
-                    : null,
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                diasDaSemanaHome[i],
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: corTexto,
-                ),
-              ),
-            );
-          }),
+       bool diaFoiCumprido =
+            _diasCumpridosSemana[id]?.contains(i) ?? false;
+
+        Color corFundo;
+        Color corTexto;
+
+        if (pertenceAoAgendamento) {
+          if (diaFoiCumprido) {
+            corFundo = const Color(0xFFB07A8A);
+            corTexto = Colors.white;
+          } else {
+            corFundo = const Color(0xFFF3EAE9);
+            corTexto = AppColors.escuro.withAlpha(180);
+          }
+        } else {
+          corFundo = Colors.transparent;
+          corTexto = AppColors.escuro.withAlpha(50);
+        }
+
+        return Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: corFundo,
+            border: pertenceAoAgendamento && !diaFoiCumprido
+                ? Border.all(
+                    color: const Color(0xFFB07A8A)
+                        .withAlpha(100),
+                    width: 1,
+                  )
+                : null,
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            diasDaSemanaHome[i],
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: corTexto,
+            ),
+          ),
         );
-
+      }),
+    );
+  }
         return Container(
           margin: const EdgeInsets.only(bottom: 16),
           padding: const EdgeInsets.all(20),
@@ -247,9 +320,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Meta: Código ${mm['MetaId']}', 
+                          'Meta: ${mm['NomeMeta'] ?? ''}',
                           style: TextStyle(
-                            fontSize: 13, 
+                            fontSize: 13,
                             color: AppColors.escuro.withAlpha(120),
                           ),
                         ),

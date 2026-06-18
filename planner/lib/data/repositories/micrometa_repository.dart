@@ -42,4 +42,15 @@ Future<List<Map<String, dynamic>>> buscarTodasAtivasGerais() async {
     final db = await _dbHelper.database;
     return await db.update('Micrometas', {'Ativo': 0}, where: 'Id = ?', whereArgs: [id]);
   }
+
+  // trazer o nome da meta pai
+  Future<List<Map<String, dynamic>>> buscarTodasAtivasComNomeMeta() async {
+    final db = await _dbHelper.database;
+    return await db.rawQuery('''
+      SELECT M.Id, M.MetaId, M.Descricao, M.FrequenciaId, M.Dia_Especifico, MT.Descricao as NomeMeta
+      FROM Micrometas M
+      INNER JOIN Meta MT ON M.MetaId = MT.Id
+      WHERE M.Ativo = 1
+    ''');
+  }
 }

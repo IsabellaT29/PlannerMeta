@@ -47,4 +47,32 @@ class HistoricoRepository {
     );
     return result.first['total'] as int;
   }
+
+  Future<List<DateTime>> buscarCumprimentosDaSemana(
+    int micrometaId,
+  ) async {
+    final db = await _dbHelper.database;
+
+    final hoje = DateTime.now();
+
+    final inicioSemana =
+        hoje.subtract(Duration(days: hoje.weekday));
+
+    final resultado = await db.query(
+      'Historico_Cumprimento',
+      where: 'MicrometaId = ? AND Data_Realizacao >= ?',
+      whereArgs: [
+        micrometaId,
+        inicioSemana.toIso8601String(),
+      ],
+    );
+
+    return resultado
+        .map(
+          (e) => DateTime.parse(
+            e['Data_Realizacao'] as String,
+          ),
+        )
+        .toList();
+  }
 }
