@@ -31,7 +31,7 @@ O sistema centraliza ferramentas indispensáveis para o controle de suas metas:
 
 A arquitetura do projeto foi desenvolvida utilizando tecnologias consolidadas do mercado:
 
-* **Framework:** Flutter v3.19.
+* **Framework:** 3.44.1.
 * **Linguagem** Dart v3.3.
 * **Banco de Dados:** SQLite (via sqflite: ^2.4.3)
 
